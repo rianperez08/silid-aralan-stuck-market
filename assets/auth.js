@@ -2,7 +2,9 @@
 const SUPABASE_URL = 'https://hlgnndcpmoitlroywoim.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsZ25uZGNwbW9pdGxyb3l3b2ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTc1MzEsImV4cCI6MjA4OTI5MzUzMX0.9wQoEeLnMhmgpZUfVd9dM7kSMsAsJ0_6uet60n6Mnuc';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 // ===== AUTH MODAL =====
 function injectAuthModal() {
@@ -147,6 +149,7 @@ async function signOut() {
 
 // ===== AUTH INIT =====
 function initAuth(onLogin, onLogout) {
+  if (!supabase) { onLogout(); return; }
   supabase.auth.getSession().then(({ data: { session } }) => {
     if (session) onLogin(session.user);
     else onLogout();
