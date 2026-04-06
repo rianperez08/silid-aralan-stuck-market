@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Portfolio — Stuck Market</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker"></div>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">STUCK<span>MARKET</span></a>
+    <div class="nav-links">
+      <a href="market.html">The Market</a>
+      <a href="dashboard.html" class="active">My Portfolio</a>
+      <a href="#" class="nav-auth" id="nav-auth-btn"></a>
+    </div>
+  </nav>
+
+  <!-- Login wall (shown when logged out) -->
+  <div id="login-wall" class="login-wall" style="display:none">
+    <div class="section-label">Supporters Only</div>
+    <h2>Sign in to view your portfolio</h2>
+    <p>Track the students you're backing, see your combined social impact, and discover new learners to support.</p>
+    <button class="btn-primary" onclick="netlifyIdentity.open('login')">Sign In / Create Account</button>
+  </div>
+
+  <!-- Dashboard (shown when logged in) -->
+  <div id="dashboard" style="display:none">
+
+    <div class="dash-header">
+      <div class="container">
+        <h1>My Portfolio</h1>
+        <p id="dash-welcome">Welcome back.</p>
+      </div>
+    </div>
+
+    <div class="dash-body">
+
+      <!-- Portfolio Stats -->
+      <div class="dash-section-title">Your Impact</div>
+      <div class="portfolio-grid" id="portfolio-stats">
+        <div class="portfolio-stat">
+          <div class="portfolio-stat-num" id="stat-backed">0</div>
+          <div class="portfolio-stat-label">Students Backed</div>
+        </div>
+        <div class="portfolio-stat">
+          <div class="portfolio-stat-num" id="stat-combined-value">₱0</div>
+          <div class="portfolio-stat-label">Combined Social Value</div>
+        </div>
+        <div class="portfolio-stat">
+          <div class="portfolio-stat-num" id="stat-committed">₱0</div>
+          <div class="portfolio-stat-label">Annual Commitment</div>
+        </div>
+        <div class="portfolio-stat">
+          <div class="portfolio-stat-num" id="stat-sroi">—</div>
+          <div class="portfolio-stat-label">Your SROI</div>
+        </div>
+      </div>
+
+      <!-- Backed Students -->
+      <div class="dash-section-title">Students You're Backing</div>
+      <div class="backed-grid" id="backed-grid">
+        <p class="empty-state">You haven't backed any students yet. Browse the market below to get started.</p>
+      </div>
+
+      <!-- Browse -->
+      <div class="dash-section-title" style="margin-top:1rem">Browse the Market</div>
+      <div class="browse-controls">
+        <input type="text" id="browse-search" placeholder="Search by name or hub…" class="search-box" />
+        <select id="browse-grade" class="filter-select">
+          <option value="">All Grades</option>
+          <option value="Grade 1">Grade 1</option>
+          <option value="Grade 2">Grade 2</option>
+          <option value="Grade 3">Grade 3</option>
+          <option value="Grade 4">Grade 4</option>
+          <option value="Grade 5">Grade 5</option>
+          <option value="Grade 6">Grade 6</option>
+        </select>
+        <select id="browse-gender" class="filter-select">
+          <option value="">All</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+        <select id="browse-sort" class="filter-select">
+          <option value="value-asc">Most Need (Lowest Value)</option>
+          <option value="value-desc">Highest Value</option>
+          <option value="attendance">Most Attendance</option>
+          <option value="worksheets">Most Activities</option>
+        </select>
+      </div>
+      <div class="market-grid" id="browse-grid"></div>
+
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-logo">STUCK<span>MARKET</span></div>
+    <p>A Silid Aralan Inc. initiative. Backing the students who need it most.</p>
+    <div class="footer-links">
+      <a href="market.html">The Market</a>
+      <a href="index.html#privacy">Privacy</a>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+  <script>
+    // ===== BACKING STORAGE =====
+    function getBackedIds(userId) {
+      return JSON.parse(localStorage.getItem('stuck_backed_' + userId) || '[]');
+    }
+    function saveBackedIds(userId, ids) {
+      localStorage.setItem('stuck_backed_' + userId, JSON.stringify(ids));
+    }
+    function toggleBack(userId, studentId) {
+      const ids = getBackedIds(userId);
+      const idx = ids.indexOf(studentId);
+      if (idx === -1) ids.push(studentId);
+      else ids.splice(idx, 1);
+      saveBackedIds(userId, ids);
+      return ids.indexOf(studentId) !== -1;
+    }
+
+    // ===== PORTFOLIO STATS =====
+    function renderPortfolioStats(userId, allStudents) {
+      const ids = getBackedIds(userId);
+      const backed = allStudents.filter(s => ids.includes(s.id));
+      const count = backed.length;
+      const combinedValue = backed.reduce((sum, s) => sum + s.current_value, 0);
+      const committed = count * 12000;
+      const totalImpact = count * 132000;
+      const sroi = committed > 0 ? (totalImpact / committed).toFixed(1) + 'x' : '—';
+
+      document.getElementById('stat-backed').textContent = count;
+      document.getElementById('stat-combined-value').textContent =
+        (combinedValue >= 0 ? '₱' : '-₱') + Math.abs(combinedValue).toLocaleString();
+      document.getElementById('stat-committed').textContent = committed > 0 ? '₱' + committed.toLocaleString() + '/yr' : '₱0';
+      document.getElementById('stat-sroi').textContent = sroi;
+    }
+
+    // ===== BACKED STUDENT CARD =====
+    function buildBackedCard(s, userId, onUnback) {
+      const progress = Math.min(100, Math.max(0, ((s.current_value - (-66000)) / 66000) * 100));
+      const valClass = s.current_value >= 0 ? 'green' : 'red';
+
+      const card = document.createElement('div');
+      card.className = 'backed-card';
+      card.innerHTML = `
+        <div class="backed-card-top">
+          <div>
+            <div class="student-id">${s.id}</div>
+            <div class="student-name">${s.alias}</div>
+            <div class="student-hub">${s.hub} Hub · ${s.grade}</div>
+          </div>
+          <button class="btn-unback" data-id="${s.id}">Remove</button>
+        </div>
+        <div class="student-value ${valClass}">₱${s.current_value.toLocaleString()}</div>
+        <div class="student-progress-bar">
+          <div class="student-progress-fill" style="width:${progress}%"></div>
+        </div>
+        <div class="student-stats">
+          <span>📅 ${s.attendance_days}d</span>
+          <span>📝 ${s.worksheets_done} sheets</span>
+          <span>${s.milestone_hit ? '🚀 Milestone' : '✨ ' + s.hope_sessions + ' hope'}</span>
+        </div>
+        <a href="student.html?id=${encodeURIComponent(s.id)}" class="btn-secondary" style="display:block;text-align:center;margin-top:0.75rem;padding:0.4rem;font-size:0.82rem;">View Profile →</a>
+      `;
+      card.querySelector('.btn-unback').addEventListener('click', () => {
+        toggleBack(userId, s.id);
+        onUnback();
+      });
+      return card;
+    }
+
+    // ===== BACKED GRID =====
+    function renderBackedGrid(userId, allStudents) {
+      const ids = getBackedIds(userId);
+      const backed = allStudents.filter(s => ids.includes(s.id));
+      const grid = document.getElementById('backed-grid');
+      grid.innerHTML = '';
+      if (!backed.length) {
+        grid.innerHTML = '<p class="empty-state">You haven\'t backed any students yet. Browse the market below to get started.</p>';
+        return;
+      }
+      backed.forEach(s => grid.appendChild(buildBackedCard(s, userId, () => {
+        renderBackedGrid(userId, allStudents);
+        renderPortfolioStats(userId, allStudents);
+        renderBrowseGrid(userId, allStudents);
+      })));
+    }
+
+    // ===== BROWSE GRID =====
+    function getBrowseFiltered(allStudents) {
+      const q = document.getElementById('browse-search').value.toLowerCase();
+      const grade = document.getElementById('browse-grade').value;
+      const gender = document.getElementById('browse-gender').value;
+      const sort = document.getElementById('browse-sort').value;
+
+      let arr = allStudents.filter(s => {
+        if (q && !s.alias.toLowerCase().includes(q) && !s.hub.toLowerCase().includes(q)) return false;
+        if (grade && s.grade !== grade) return false;
+        if (gender && s.gender !== gender) return false;
+        return true;
+      });
+
+      if (sort === 'value-desc') arr.sort((a, b) => b.current_value - a.current_value);
+      else if (sort === 'value-asc') arr.sort((a, b) => a.current_value - b.current_value);
+      else if (sort === 'attendance') arr.sort((a, b) => b.attendance_days - a.attendance_days);
+      else if (sort === 'worksheets') arr.sort((a, b) => b.worksheets_done - a.worksheets_done);
+
+      return arr;
+    }
+
+    function buildBrowseCard(s, userId, onToggle) {
+      const ids = getBackedIds(userId);
+      const isBacked = ids.includes(s.id);
+      const progress = Math.min(100, Math.max(0, ((s.current_value - (-66000)) / 66000) * 100));
+      const valClass = s.current_value >= 0 ? 'green' : 'red';
+
+      const card = document.createElement('div');
+      card.className = 'student-card';
+      card.style.cursor = 'default';
+      card.innerHTML = `
+        <div class="student-card-top">
+          <span class="student-id">${s.id}</span>
+          <span class="student-grade">${s.grade}</span>
+        </div>
+        <div class="student-name">${s.alias}</div>
+        <div class="student-hub">${s.hub} Hub · ${s.program}</div>
+        <div class="student-value ${valClass}">₱${s.current_value.toLocaleString()}</div>
+        <div class="student-progress-bar">
+          <div class="student-progress-fill" style="width:${progress}%"></div>
+        </div>
+        <div class="student-stats">
+          <span>📅 ${s.attendance_days}d</span>
+          <span>📝 ${s.worksheets_done} sheets</span>
+          <span>${s.milestone_hit ? '🚀 Milestone' : '✨ ' + s.hope_sessions + ' hope'}</span>
+        </div>
+        <button class="btn-back ${isBacked ? 'backed' : ''}" data-id="${s.id}">
+          ${isBacked ? '✓ Backing' : 'Back This Student'}
+        </button>
+      `;
+
+      card.querySelector('.btn-back').addEventListener('click', () => {
+        toggleBack(userId, s.id);
+        onToggle();
+      });
+      return card;
+    }
+
+    function renderBrowseGrid(userId, allStudents) {
+      const filtered = getBrowseFiltered(allStudents);
+      const grid = document.getElementById('browse-grid');
+      grid.innerHTML = '';
+      if (!filtered.length) {
+        grid.innerHTML = '<p style="color:#888;text-align:center;padding:3rem">No learners match your search.</p>';
+        return;
+      }
+      filtered.forEach(s => grid.appendChild(buildBrowseCard(s, userId, () => {
+        renderBackedGrid(userId, allStudents);
+        renderPortfolioStats(userId, allStudents);
+        renderBrowseGrid(userId, allStudents);
+      })));
+    }
+
+    // ===== AUTH + INIT =====
+    let _allStudents = null;
+
+    function showDashboard(user) {
+      document.getElementById('login-wall').style.display = 'none';
+      document.getElementById('dashboard').style.display = '';
+      document.getElementById('nav-auth-btn').textContent = user.email.split('@')[0];
+      document.getElementById('nav-auth-btn').onclick = e => { e.preventDefault(); netlifyIdentity.open(); };
+      document.getElementById('dash-welcome').textContent =
+        'Welcome back, ' + (user.user_metadata && user.user_metadata.full_name
+          ? user.user_metadata.full_name.split(' ')[0]
+          : user.email.split('@')[0]) + '.';
+
+      const userId = user.id;
+
+      if (_allStudents) {
+        buildTicker(_allStudents);
+        renderPortfolioStats(userId, _allStudents);
+        renderBackedGrid(userId, _allStudents);
+        renderBrowseGrid(userId, _allStudents);
+      } else {
+        loadStudents().then(students => {
+          _allStudents = students;
+          buildTicker(students);
+          renderPortfolioStats(userId, students);
+          renderBackedGrid(userId, students);
+          renderBrowseGrid(userId, students);
+        });
+      }
+
+      ['browse-search', 'browse-grade', 'browse-gender', 'browse-sort'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('input', () => renderBrowseGrid(userId, _allStudents));
+        el.addEventListener('change', () => renderBrowseGrid(userId, _allStudents));
+      });
+    }
+
+    function showLoginWall() {
+      document.getElementById('login-wall').style.display = '';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('nav-auth-btn').textContent = 'Sign In';
+      document.getElementById('nav-auth-btn').onclick = e => { e.preventDefault(); netlifyIdentity.open('login'); };
+    }
+
+    netlifyIdentity.on('init', user => {
+      if (user) showDashboard(user);
+      else showLoginWall();
+    });
+    netlifyIdentity.on('login', user => {
+      netlifyIdentity.close();
+      showDashboard(user);
+    });
+    netlifyIdentity.on('logout', () => showLoginWall());
+  </script>
+</body>
+</html>
