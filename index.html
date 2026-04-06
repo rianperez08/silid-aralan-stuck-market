@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stuck Market — Scholarship Marketplace</title>
   <link rel="stylesheet" href="assets/style.css" />
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/auth.js"></script>
 </head>
 <body>
 
@@ -172,28 +173,7 @@
 
   <script src="assets/app.js"></script>
   <script>
-    // Auth nav state
-    function updateAuthNav(user) {
-      const dashboard = document.getElementById('nav-dashboard');
-      const authBtn = document.getElementById('nav-auth-btn');
-      const invest = document.getElementById('nav-invest');
-      if (user) {
-        dashboard.style.display = '';
-        authBtn.style.display = '';
-        authBtn.textContent = user.email.split('@')[0];
-        authBtn.onclick = e => { e.preventDefault(); netlifyIdentity.open(); };
-        invest.style.display = 'none';
-      } else {
-        dashboard.style.display = 'none';
-        authBtn.style.display = '';
-        authBtn.textContent = 'Sign In';
-        authBtn.onclick = e => { e.preventDefault(); netlifyIdentity.open('login'); };
-        invest.style.display = '';
-      }
-    }
-    netlifyIdentity.on('init', user => updateAuthNav(user));
-    netlifyIdentity.on('login', user => { updateAuthNav(user); netlifyIdentity.close(); });
-    netlifyIdentity.on('logout', () => updateAuthNav(null));
+    initAuth(user => updateNavAuth(user), () => updateNavAuth(null));
 
     loadStudents().then(students => {
       // Hero stats

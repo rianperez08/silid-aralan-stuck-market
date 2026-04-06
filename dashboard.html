@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Portfolio — Stuck Market</title>
   <link rel="stylesheet" href="assets/style.css" />
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/auth.js"></script>
 </head>
 <body>
 
@@ -27,7 +28,7 @@
     <div class="section-label">Supporters Only</div>
     <h2>Sign in to view your portfolio</h2>
     <p>Track the students you're backing, see your combined social impact, and discover new learners to support.</p>
-    <button class="btn-primary" onclick="netlifyIdentity.open('login')">Sign In / Create Account</button>
+    <button class="btn-primary" onclick="openAuthModal('login')">Sign In / Create Account</button>
   </div>
 
   <!-- Dashboard (shown when logged in) -->
@@ -110,36 +111,37 @@
 
   <script src="assets/app.js"></script>
   <script>
-    // ===== BACKING STORAGE =====
-    function getBackedIds(userId) {
-      return JSON.parse(localStorage.getItem('stuck_backed_' + userId) || '[]');
+    // ===== BACKING (Supabase DB) =====
+    async function getBackedIds(userId) {
+      const { data } = await supabase
+        .from('backed_students')
+        .select('student_id')
+        .eq('user_id', userId);
+      return (data || []).map(r => r.student_id);
     }
-    function saveBackedIds(userId, ids) {
-      localStorage.setItem('stuck_backed_' + userId, JSON.stringify(ids));
+
+    async function backStudent(userId, studentId) {
+      await supabase.from('backed_students').insert({ user_id: userId, student_id: studentId });
     }
-    function toggleBack(userId, studentId) {
-      const ids = getBackedIds(userId);
-      const idx = ids.indexOf(studentId);
-      if (idx === -1) ids.push(studentId);
-      else ids.splice(idx, 1);
-      saveBackedIds(userId, ids);
-      return ids.indexOf(studentId) !== -1;
+
+    async function unbackStudent(userId, studentId) {
+      await supabase.from('backed_students').delete()
+        .eq('user_id', userId).eq('student_id', studentId);
     }
 
     // ===== PORTFOLIO STATS =====
-    function renderPortfolioStats(userId, allStudents) {
-      const ids = getBackedIds(userId);
-      const backed = allStudents.filter(s => ids.includes(s.id));
+    function renderPortfolioStats(backedIds, allStudents) {
+      const backed = allStudents.filter(s => backedIds.includes(s.id));
       const count = backed.length;
       const combinedValue = backed.reduce((sum, s) => sum + s.current_value, 0);
       const committed = count * 12000;
-      const totalImpact = count * 132000;
-      const sroi = committed > 0 ? (totalImpact / committed).toFixed(1) + 'x' : '—';
+      const sroi = committed > 0 ? ((count * 132000) / committed).toFixed(1) + 'x' : '—';
 
       document.getElementById('stat-backed').textContent = count;
       document.getElementById('stat-combined-value').textContent =
         (combinedValue >= 0 ? '₱' : '-₱') + Math.abs(combinedValue).toLocaleString();
-      document.getElementById('stat-committed').textContent = committed > 0 ? '₱' + committed.toLocaleString() + '/yr' : '₱0';
+      document.getElementById('stat-committed').textContent =
+        committed > 0 ? '₱' + committed.toLocaleString() + '/yr' : '₱0';
       document.getElementById('stat-sroi').textContent = sroi;
     }
 
@@ -170,28 +172,25 @@
         </div>
         <a href="student.html?id=${encodeURIComponent(s.id)}" class="btn-secondary" style="display:block;text-align:center;margin-top:0.75rem;padding:0.4rem;font-size:0.82rem;">View Profile →</a>
       `;
-      card.querySelector('.btn-unback').addEventListener('click', () => {
-        toggleBack(userId, s.id);
+      card.querySelector('.btn-unback').addEventListener('click', async () => {
+        await unbackStudent(userId, s.id);
         onUnback();
       });
       return card;
     }
 
     // ===== BACKED GRID =====
-    function renderBackedGrid(userId, allStudents) {
-      const ids = getBackedIds(userId);
+    async function renderBackedGrid(userId, allStudents) {
+      const ids = await getBackedIds(userId);
       const backed = allStudents.filter(s => ids.includes(s.id));
       const grid = document.getElementById('backed-grid');
       grid.innerHTML = '';
       if (!backed.length) {
-        grid.innerHTML = '<p class="empty-state">You haven\'t backed any students yet. Browse the market below to get started.</p>';
-        return;
+        grid.innerHTML = '<p class="empty-state">You haven\'t backed any students yet. Browse below to get started.</p>';
+      } else {
+        backed.forEach(s => grid.appendChild(buildBackedCard(s, userId, () => refreshAll(userId))));
       }
-      backed.forEach(s => grid.appendChild(buildBackedCard(s, userId, () => {
-        renderBackedGrid(userId, allStudents);
-        renderPortfolioStats(userId, allStudents);
-        renderBrowseGrid(userId, allStudents);
-      })));
+      return ids;
     }
 
     // ===== BROWSE GRID =====
@@ -216,9 +215,8 @@
       return arr;
     }
 
-    function buildBrowseCard(s, userId, onToggle) {
-      const ids = getBackedIds(userId);
-      const isBacked = ids.includes(s.id);
+    function buildBrowseCard(s, userId, backedIds, onToggle) {
+      const isBacked = backedIds.includes(s.id);
       const progress = Math.min(100, Math.max(0, ((s.current_value - (-66000)) / 66000) * 100));
       const valClass = s.current_value >= 0 ? 'green' : 'red';
 
@@ -246,81 +244,71 @@
         </button>
       `;
 
-      card.querySelector('.btn-back').addEventListener('click', () => {
-        toggleBack(userId, s.id);
+      card.querySelector('.btn-back').addEventListener('click', async () => {
+        if (isBacked) {
+          await unbackStudent(userId, s.id);
+        } else {
+          await backStudent(userId, s.id);
+        }
         onToggle();
       });
       return card;
     }
 
-    function renderBrowseGrid(userId, allStudents) {
-      const filtered = getBrowseFiltered(allStudents);
+    async function renderBrowseGrid(userId) {
+      const backedIds = await getBackedIds(userId);
+      const filtered = getBrowseFiltered(_allStudents);
       const grid = document.getElementById('browse-grid');
       grid.innerHTML = '';
       if (!filtered.length) {
         grid.innerHTML = '<p style="color:#888;text-align:center;padding:3rem">No learners match your search.</p>';
         return;
       }
-      filtered.forEach(s => grid.appendChild(buildBrowseCard(s, userId, () => {
-        renderBackedGrid(userId, allStudents);
-        renderPortfolioStats(userId, allStudents);
-        renderBrowseGrid(userId, allStudents);
-      })));
+      filtered.forEach(s => grid.appendChild(buildBrowseCard(s, userId, backedIds, () => refreshAll(userId))));
+    }
+
+    // ===== REFRESH ALL =====
+    async function refreshAll(userId) {
+      const ids = await renderBackedGrid(userId, _allStudents);
+      renderPortfolioStats(ids, _allStudents);
+      await renderBrowseGrid(userId);
     }
 
     // ===== AUTH + INIT =====
     let _allStudents = null;
+    let _filtersAttached = false;
 
-    function showDashboard(user) {
+    async function showDashboard(user) {
       document.getElementById('login-wall').style.display = 'none';
       document.getElementById('dashboard').style.display = '';
-      document.getElementById('nav-auth-btn').textContent = user.email.split('@')[0];
-      document.getElementById('nav-auth-btn').onclick = e => { e.preventDefault(); netlifyIdentity.open(); };
+      updateNavAuth(user);
       document.getElementById('dash-welcome').textContent =
-        'Welcome back, ' + (user.user_metadata && user.user_metadata.full_name
-          ? user.user_metadata.full_name.split(' ')[0]
-          : user.email.split('@')[0]) + '.';
+        'Welcome back, ' + user.email.split('@')[0] + '.';
 
-      const userId = user.id;
-
-      if (_allStudents) {
+      if (!_allStudents) {
+        _allStudents = await loadStudents();
         buildTicker(_allStudents);
-        renderPortfolioStats(userId, _allStudents);
-        renderBackedGrid(userId, _allStudents);
-        renderBrowseGrid(userId, _allStudents);
-      } else {
-        loadStudents().then(students => {
-          _allStudents = students;
-          buildTicker(students);
-          renderPortfolioStats(userId, students);
-          renderBackedGrid(userId, students);
-          renderBrowseGrid(userId, students);
-        });
       }
 
-      ['browse-search', 'browse-grade', 'browse-gender', 'browse-sort'].forEach(id => {
-        const el = document.getElementById(id);
-        el.addEventListener('input', () => renderBrowseGrid(userId, _allStudents));
-        el.addEventListener('change', () => renderBrowseGrid(userId, _allStudents));
-      });
+      await refreshAll(user.id);
+
+      if (!_filtersAttached) {
+        _filtersAttached = true;
+        ['browse-search', 'browse-grade', 'browse-gender', 'browse-sort'].forEach(id => {
+          const el = document.getElementById(id);
+          el.addEventListener('input', () => renderBrowseGrid(user.id));
+          el.addEventListener('change', () => renderBrowseGrid(user.id));
+        });
+      }
     }
 
     function showLoginWall() {
       document.getElementById('login-wall').style.display = '';
       document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('nav-auth-btn').textContent = 'Sign In';
-      document.getElementById('nav-auth-btn').onclick = e => { e.preventDefault(); netlifyIdentity.open('login'); };
+      updateNavAuth(null);
     }
 
-    netlifyIdentity.on('init', user => {
-      if (user) showDashboard(user);
-      else showLoginWall();
-    });
-    netlifyIdentity.on('login', user => {
-      netlifyIdentity.close();
-      showDashboard(user);
-    });
-    netlifyIdentity.on('logout', () => showLoginWall());
+    initAuth(showDashboard, showLoginWall);
   </script>
 </body>
 </html>
