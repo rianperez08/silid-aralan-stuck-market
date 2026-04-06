@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Market — Stuck Market</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker"></div>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">STUCK<span>MARKET</span></a>
+    <div class="nav-links">
+      <a href="market.html" class="active">The Market</a>
+      <a href="index.html#how" class="nav-btn">Invest Now</a>
+    </div>
+  </nav>
+
+  <div class="market-header">
+    <div class="container">
+      <h1>The Market</h1>
+      <p class="hero-sub">Every learner is a living asset. Back one today.</p>
+      <div class="market-controls">
+        <input type="text" id="search" placeholder="Search by name or hub..." class="search-box" />
+        <select id="filter-grade" class="filter-select">
+          <option value="">All Grades</option>
+          <option value="Grade 1">Grade 1</option>
+          <option value="Grade 2">Grade 2</option>
+          <option value="Grade 3">Grade 3</option>
+          <option value="Grade 4">Grade 4</option>
+          <option value="Grade 5">Grade 5</option>
+          <option value="Grade 6">Grade 6</option>
+        </select>
+        <select id="filter-gender" class="filter-select">
+          <option value="">All</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+        <select id="sort-by" class="filter-select">
+          <option value="value-desc">Highest Value</option>
+          <option value="value-asc">Lowest Value</option>
+          <option value="attendance">Most Attendance</option>
+          <option value="worksheets">Most Activities</option>
+        </select>
+      </div>
+      <div class="market-summary" id="market-summary"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="market-grid" id="market-grid"></div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-logo">STUCK<span>MARKET</span></div>
+    <p>A Silid Aralan Inc. initiative.</p>
+  </footer>
+
+  <script src="assets/app.js"></script>
+  <script>
+    let allStudents = [];
+
+    loadStudents().then(students => {
+      allStudents = students;
+      buildTicker(students);
+
+      // Summary
+      const avg = Math.round(students.reduce((s,st) => s + st.current_value,0) / students.length);
+      const topAtt = Math.max(...students.map(s => s.attendance_days));
+      document.getElementById('market-summary').innerHTML = `
+        <span><strong>${students.length}</strong> learners listed</span>
+        <span>Average value: <strong class="green">₱${avg.toLocaleString()}</strong></span>
+        <span>Best attendance: <strong>${topAtt} days</strong></span>
+      `;
+
+      renderGrid(students);
+    });
+
+    function getFiltered() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const grade = document.getElementById('filter-grade').value;
+      const gender = document.getElementById('filter-gender').value;
+      const sort = document.getElementById('sort-by').value;
+
+      let arr = allStudents.filter(s => {
+        if (q && !s.alias.toLowerCase().includes(q) && !s.hub.toLowerCase().includes(q)) return false;
+        if (grade && s.grade !== grade) return false;
+        if (gender && s.gender !== gender) return false;
+        return true;
+      });
+
+      if (sort === 'value-desc') arr.sort((a,b) => b.current_value - a.current_value);
+      else if (sort === 'value-asc') arr.sort((a,b) => a.current_value - b.current_value);
+      else if (sort === 'attendance') arr.sort((a,b) => b.attendance_days - a.attendance_days);
+      else if (sort === 'worksheets') arr.sort((a,b) => b.worksheets_done - a.worksheets_done);
+
+      return arr;
+    }
+
+    function renderGrid(students) {
+      const grid = document.getElementById('market-grid');
+      grid.innerHTML = '';
+      students.forEach(s => grid.appendChild(buildStudentCard(s)));
+      if (!students.length) grid.innerHTML = '<p style="color:#888;text-align:center;padding:3rem">No learners match your search.</p>';
+    }
+
+    ['search','filter-grade','filter-gender','sort-by'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => renderGrid(getFiltered()));
+      document.getElementById(id).addEventListener('change', () => renderGrid(getFiltered()));
+    });
+  </script>
+</body>
+</html>

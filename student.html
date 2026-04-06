@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner Profile — Stuck Market</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker"></div>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">STUCK<span>MARKET</span></a>
+    <div class="nav-links">
+      <a href="market.html">The Market</a>
+      <a href="index.html#how" class="nav-btn">Invest Now</a>
+    </div>
+  </nav>
+
+  <div class="container profile-container" id="profile">
+    <div class="loading">Loading learner profile…</div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-logo">STUCK<span>MARKET</span></div>
+    <p>A Silid Aralan Inc. initiative.</p>
+  </footer>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const studentId = params.get('id');
+
+    loadStudents().then(students => {
+      buildTicker(students);
+
+      const s = students.find(x => x.id === studentId);
+      if (!s) {
+        document.getElementById('profile').innerHTML = '<p style="color:#888;padding:3rem">Learner not found.</p>';
+        return;
+      }
+
+      const progress = Math.min(100, Math.max(0, ((s.current_value - (-66000)) / 66000) * 100));
+      const valClass = s.current_value >= 0 ? 'green' : 'red';
+
+      // SROI bar segments
+      const totalDays = s.attendance_days + s.worksheets_done + s.hope_sessions;
+      const attPct = totalDays ? Math.round((s.attendance_days * 150) / 66000 * 100) : 0;
+      const actPct = totalDays ? Math.round((s.worksheets_done * 100) / 66000 * 100) : 0;
+      const hopePct = totalDays ? Math.round((s.hope_sessions * 50) / 66000 * 100) : 0;
+
+      document.getElementById('profile').innerHTML = `
+        <div class="breadcrumb"><a href="market.html">← Back to Market</a></div>
+
+        <div class="profile-header">
+          <div class="profile-avatar">${s.alias.charAt(0)}</div>
+          <div class="profile-title">
+            <div class="ticker-badge">${s.id}</div>
+            <h1>${s.alias}</h1>
+            <div class="profile-meta">
+              <span>${s.grade}</span>
+              <span>${s.hub} Hub</span>
+              <span>${s.program} Program</span>
+              <span>${s.gender}</span>
+            </div>
+          </div>
+          <div class="profile-value-block">
+            <div class="profile-value-label">Current Social Value</div>
+            <div class="profile-value ${valClass}">₱${s.current_value.toLocaleString()}</div>
+            <div class="profile-value-sub">Baseline: -₱66,000</div>
+          </div>
+        </div>
+
+        <div class="profile-progress-wrap">
+          <div class="progress-label">
+            <span>Starting Debt (-₱66,000)</span>
+            <span>Break Even (₱0)</span>
+          </div>
+          <div class="progress-bar-outer">
+            <div class="progress-bar-fill" style="width:${progress}%"></div>
+          </div>
+          <div class="progress-pct">${progress.toFixed(1)}% recovered</div>
+        </div>
+
+        <div class="profile-grid">
+          <div class="metric-card">
+            <div class="metric-icon">📅</div>
+            <div class="metric-value">${s.attendance_days}</div>
+            <div class="metric-label">Days Attended</div>
+            <div class="metric-impact green">+₱${(s.attendance_days * 150).toLocaleString()}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">✨</div>
+            <div class="metric-value">${s.hope_sessions}</div>
+            <div class="metric-label">Hopeful Sessions</div>
+            <div class="metric-impact green">+₱${(s.hope_sessions * 50).toLocaleString()}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">📝</div>
+            <div class="metric-value">${s.worksheets_done}</div>
+            <div class="metric-label">Activities Done</div>
+            <div class="metric-impact green">+₱${(s.worksheets_done * 100).toLocaleString()}</div>
+          </div>
+          <div class="metric-card ${s.milestone_hit ? 'milestone-card' : ''}">
+            <div class="metric-icon">🚀</div>
+            <div class="metric-value">${s.milestone_hit ? '✓' : '—'}</div>
+            <div class="metric-label">Reading Milestone</div>
+            <div class="metric-impact ${s.milestone_hit ? 'green' : 'muted'}">${s.milestone_hit ? '+₱5,000' : 'Pending'}</div>
+          </div>
+        </div>
+
+        <div class="reading-section">
+          <h3>Reading Profile</h3>
+          <div class="reading-badge">${s.reading_profile}</div>
+          <p class="reading-note">Assessed via CRLA (Philippine Reading Assessment). Updated monthly by an independent Head Co-Learner.</p>
+        </div>
+
+        <div class="invest-cta">
+          <h3>Back ${s.alias.split(' ')[0]}'s Journey</h3>
+          <p>₱12,000/year commitment (₱1,000/month via payroll deduction). Your ₱500 is matched with ₱500 from your employer.</p>
+          <a href="index.html#how" class="btn-primary">Get Started →</a>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>
