@@ -113,7 +113,7 @@
   <script>
     // ===== BACKING (Supabase DB) =====
     async function getBackedIds(userId) {
-      const { data } = await supabase
+      const { data } = await _sb
         .from('backed_students')
         .select('student_id')
         .eq('user_id', userId);
@@ -121,11 +121,11 @@
     }
 
     async function backStudent(userId, studentId) {
-      await supabase.from('backed_students').insert({ user_id: userId, student_id: studentId });
+      await _sb.from('backed_students').insert({ user_id: userId, student_id: studentId });
     }
 
     async function unbackStudent(userId, studentId) {
-      await supabase.from('backed_students').delete()
+      await _sb.from('backed_students').delete()
         .eq('user_id', userId).eq('student_id', studentId);
     }
 

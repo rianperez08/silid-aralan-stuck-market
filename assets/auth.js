@@ -2,7 +2,7 @@
 const SUPABASE_URL = 'https://hlgnndcpmoitlroywoim.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsZ25uZGNwbW9pdGxyb3l3b2ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MTc1MzEsImV4cCI6MjA4OTI5MzUzMX0.9wQoEeLnMhmgpZUfVd9dM7kSMsAsJ0_6uet60n6Mnuc';
 
-const supabase = window.supabase
+const _sb = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
@@ -125,7 +125,7 @@ function setAuthLoading(loading) {
 
 // ===== AUTH ACTIONS =====
 async function signIn(email, password) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) {
     showAuthError(error.message);
   } else {
@@ -134,7 +134,7 @@ async function signIn(email, password) {
 }
 
 async function signUp(email, password) {
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { error } = await _sb.auth.signUp({ email, password });
   if (error) {
     showAuthError(error.message);
   } else {
@@ -144,17 +144,17 @@ async function signUp(email, password) {
 }
 
 async function signOut() {
-  await supabase.auth.signOut();
+  await _sb.auth.signOut();
 }
 
 // ===== AUTH INIT =====
 function initAuth(onLogin, onLogout) {
-  if (!supabase) { onLogout(); return; }
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  if (!_sb) { onLogout(); return; }
+  _sb.auth.getSession().then(({ data: { session } }) => {
     if (session) onLogin(session.user);
     else onLogout();
   });
-  supabase.auth.onAuthStateChange((event, session) => {
+  _sb.auth.onAuthStateChange((event, session) => {
     if (session) onLogin(session.user);
     else onLogout();
   });
