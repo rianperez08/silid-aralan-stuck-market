@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scholar Index — Stuck Market</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/auth.js"></script>
+  <style>
+    /* ===== SCHOLAR TIMELINE STYLES ===== */
+    .scholars-header {
+      background: var(--yellow);
+      border-bottom: 2px solid var(--border);
+      padding: 2.5rem 2rem 2rem;
+    }
+    .scholars-header h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .scholars-header p { color: var(--text); opacity: 0.7; font-size: 0.88rem; }
+
+    .scholar-tabs-wrap {
+      border-bottom: 2px solid var(--border);
+      background: var(--bg);
+      overflow-x: auto;
+      display: flex;
+    }
+    .scholar-tab-btn {
+      padding: 12px 22px;
+      font-family: var(--font);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      border-right: 1px solid var(--border);
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      color: var(--muted);
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .scholar-tab-btn:hover { color: var(--text); background: var(--yellow-light); }
+    .scholar-tab-btn.active { color: var(--text); background: var(--yellow); border-bottom-color: var(--border); font-weight: 700; }
+
+    .scholar-main { padding: 24px; max-width: 900px; margin: 0 auto; }
+
+    .scholar-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .scholar-name-block .s-name {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+    }
+    .scholar-name-block .s-role {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .roi-badge {
+      background: var(--yellow);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .roi-badge .roi-label { font-size: 0.62rem; color: #333322; letter-spacing: 0.15em; text-transform: uppercase; }
+    .roi-badge .roi-value { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+    .roi-badge .roi-sub { font-size: 0.68rem; color: #333322; }
+
+    .chart-area {
+      background: var(--yellow-light);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .chart-grid-label {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 52px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 16px 8px; font-size: 8px; color: var(--muted); text-align: right;
+      pointer-events: none;
+    }
+    .chart-svg-wrap { margin-left: 52px; }
+    svg.chart { width: 100%; display: block; height: 200px; }
+
+    .milestone-strip { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .milestone {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex: 1;
+      min-width: 110px;
+      font-family: var(--font);
+    }
+    .milestone:hover, .milestone.active { border-color: var(--border); background: var(--yellow); border-width: 2px; }
+    .milestone .m-year { color: var(--muted); font-size: 0.65rem; letter-spacing: 0.1em; margin-bottom: 3px; }
+    .milestone .m-event { color: var(--text); font-size: 0.72rem; line-height: 1.3; font-weight: 600; }
+    .milestone .m-delta { margin-top: 4px; font-size: 0.68rem; }
+    .milestone .up { color: #6b5200; font-weight: 700; }
+    .milestone .down { color: var(--red); }
+    .milestone .neutral { color: #8b6d00; }
+
+    .story-panel {
+      background: var(--yellow-light);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 16px;
+      min-height: 80px;
+    }
+    .story-event { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .story-text { font-size: 0.82rem; color: #444433; line-height: 1.8; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 0; }
+    @media(max-width:600px){ .stats-row { grid-template-columns: repeat(2,1fr); } }
+    .stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+    .stat-box .stat-label { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-box .stat-val { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); }
+    .stat-box .stat-val.green { color: #6b5200; }
+
+    .cta-bar {
+      margin-top: 24px;
+      border-top: 2px solid var(--border);
+      padding-top: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .cta-text { font-size: 0.78rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="scanline"></div>
+
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">STUCK<span>MARKET</span></a>
+  <div class="nav-links">
+    <a href="scholars.html" class="active">Scholar Index</a>
+    <a href="market.html">The Market</a>
+    <a href="index.html#how">How It Works</a>
+    <a href="dashboard.html" id="nav-dashboard" style="display:none">My Portfolio</a>
+    <a href="index.html#how" class="nav-btn" id="nav-invest">Support Now</a>
+    <a href="#" class="nav-auth" id="nav-auth-btn" onclick="openAuthModal('login');return false;">Sign In</a>
+  </div>
+</nav>
+
+<div class="scholars-header">
+  <div class="section-label">Silid Aralan, Inc.</div>
+  <h1>Scholar Index</h1>
+  <p>Interactive ROI timelines for every scholar who graduated the SAI program.</p>
+</div>
+
+<div class="scholar-tabs-wrap" id="scholarNav"></div>
+
+<div class="scholar-main">
+  <div class="scholar-header-row">
+    <div class="scholar-name-block">
+      <div class="s-name" id="scholarName">—</div>
+      <div class="s-role" id="scholarRole">—</div>
+    </div>
+    <div class="roi-badge">
+      <div class="roi-label">Annual ROI</div>
+      <div class="roi-value" id="roiValue">—</div>
+      <div class="roi-sub" id="roiSub">vs. investment</div>
+    </div>
+  </div>
+
+  <div class="chart-area">
+    <div class="chart-grid-label" id="gridLabels"></div>
+    <div class="chart-svg-wrap">
+      <svg class="chart" id="chartSvg" viewBox="0 0 800 200" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+
+  <div class="milestone-strip" id="milestones"></div>
+
+  <div class="story-panel">
+    <div class="story-event" id="storyEvent">← Select a milestone above</div>
+    <div class="story-text" id="storyText">Each marker represents a turning point in this scholar's journey. Click any event to read the story behind it.</div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="cta-bar">
+    <div class="cta-text">₱1,000/month is all it takes to fund the next scholar.</div>
+    <button class="btn-primary" onclick="openAuthModal('signup')">Invest in a Scholar →</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-logo">STUCK<span>MARKET</span></div>
+  <p>A Silid Aralan Inc. initiative.</p>
+  <div class="footer-links">
+    <a href="market.html">The Market</a>
+    <a href="scholars.html">Scholar Index</a>
+    <a href="index.html#how">How It Works</a>
+    <a href="index.html#privacy">Privacy</a>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script>
+  initAuth(user => updateNavAuth(user), () => updateNavAuth(null));
+  loadStudents().then(students => buildTicker(students));
+
+  const scholars = [
+    {
+      id: 'kent',
+      name: 'Kent Ian Vargas',
+      role: 'Public School Teacher I',
+      ticker: 'KIV',
+      roi: '6.2x',
+      roiSub: 'vs. ₱60,000 invested over 5 yrs',
+      invested: 60000,
+      duration: 5,
+      stats: [
+        {label:'Total Invested',val:'₱60,000',green:false},
+        {label:'Annual Salary',val:'₱372,000',green:true},
+        {label:'Break-even',val:'2 years',green:true},
+        {label:'Students/Year',val:'150+',green:true},
+      ],
+      milestones: [
+        {year:'Before SAI',event:'At-risk, non-reader',delta:'−',type:'down',
+         story:'Without intervention, Kent Ian was on track for informal low-skill labor — earning around ₱120,000/year and dependent on government subsidy. A net drain on the economy.',
+         roiPt:-30},
+        {year:'Year 1 (Gr. 5)',event:'Joined SAI Program',delta:'↱ Investment begins',type:'neutral',
+         story:'A donor subscribed ₱1,000/month to Kent Ian\'s literacy journey. That subscription — the size of a streaming plan — became the seed capital of a public servant\'s career.',
+         roiPt:-20},
+        {year:'Year 2 (Gr. 6)',event:'Grade level milestone',delta:'Reading improves',type:'neutral',
+         story:'Core literacy benchmarks hit. Reading comprehension — the foundation of every future skill — is now developing. The stock is accumulating value.',
+         roiPt:-10},
+        {year:'Year 3 (Gr. 7)',event:'Junior High entry',delta:'▲ Trajectory shifts',type:'up',
+         story:'Kent Ian transitions to high school, a milestone many at-risk students never reach. The slope of his trajectory changes — upward.',
+         roiPt:15},
+        {year:'Year 4 (Gr. 8–9)',event:'Sustained performance',delta:'▲ Compounding',type:'up',
+         story:'Consistent academic progress. Each grade completed increases the probability of formal employment and reduces lifetime social subsidy cost.',
+         roiPt:35},
+        {year:'Year 5 (Gr. 10)',event:'Program completion',delta:'▲ Ready for market',type:'up',
+         story:'Five years of ₱1,000/month. ₱60,000 total. Kent Ian graduates the SAI program as a functional, literate young adult ready for higher education.',
+         roiPt:55},
+        {year:'Career Entry',event:'Hired: Teacher I',delta:'▲▲ First salary',type:'up',
+         story:'₱372,000/year. Kent Ian becomes a net tax contributor — paying back roughly ₱30,000 in taxes annually. Break-even on the ₱60,000 investment: just 2 years.',
+         roiPt:130},
+        {year:'Multiplier',event:'Teaching 150+ students/year',delta:'▲▲▲ Legacy ROI',type:'up',
+         story:'Every year, Kent Ian "unstucks" an estimated 5 more non-readers — saving the government ₱330,000 in remedial education costs. The donor didn\'t fund a student. They funded a branch of the exchange.',
+         roiPt:220},
+      ]
+    },
+    {
+      id: 'erlen',
+      name: 'Erlen Mahilum',
+      role: 'BPO Content Moderator',
+      ticker: 'ERM',
+      roi: '6.25x',
+      roiSub: 'vs. ₱48,000 invested over 4 yrs',
+      invested: 48000,
+      duration: 4,
+      stats: [
+        {label:'Total Invested',val:'₱48,000',green:false},
+        {label:'Annual Salary',val:'₱300,000',green:true},
+        {label:'Break-even',val:'2 years',green:true},
+        {label:'Income Delta',val:'+₱180k/yr',green:true},
+      ],
+      milestones: [
+        {year:'Before SAI',event:'High dropout risk',delta:'−',type:'down',
+         story:'Without SAI, Erlen faced a future of informal labor — earning ₱8,000–₱10,000/month with no path to the formal economy. A likely lifetime net subsidy consumer.',
+         roiPt:-30},
+        {year:'Year 1 (Gr. 7)',event:'Joined SAI Program',delta:'↱ ₱1,000/month subscribed',type:'neutral',
+         story:'Four years. ₱48,000 total. A donor\'s monthly commitment — smaller than most utility bills — became the entry ticket to the digital economy for Erlen.',
+         roiPt:-18},
+        {year:'Year 2 (Gr. 8)',event:'Reading comprehension milestone',delta:'▲ Foundation builds',type:'up',
+         story:'Content moderation requires cultural nuance, reading comprehension, and critical thinking. All of it starts here — with SAI\'s literacy intervention.',
+         roiPt:5},
+        {year:'Year 3 (Gr. 9)',event:'Critical thinking develops',delta:'▲ BPO-ready skills',type:'up',
+         story:'The skills that make Erlen hireable in the BPO sector are accumulating. The market is recognizing value before she even enters it.',
+         roiPt:30},
+        {year:'Year 4 (Gr. 10)',event:'Program completion',delta:'▲ Portfolio complete',type:'up',
+         story:'₱48,000 fully deployed. Erlen exits the program literate, capable, and employable in the Philippines\' largest private-sector industry.',
+         roiPt:58},
+        {year:'Career Entry',event:'Hired: Content Moderator',delta:'▲▲ ₱25,000/month',type:'up',
+         story:'₱300,000/year — 2.5x what she would have earned without SAI. The ₱48,000 investment recovers in under 2 years of her increased earnings alone.',
+         roiPt:140},
+        {year:'Giving Back',event:'Consumer + taxpayer',delta:'▲▲▲ 6.25x annual return',type:'up',
+         story:'Erlen isn\'t a recipient of social aid — she\'s a professional, a consumer fueling other sectors, and a taxpayer. Every single year she works delivers a 6.25x return on the original investment.',
+         roiPt:215},
+      ]
+    },
+    {
+      id: 'carlo',
+      name: 'Carlo Jumagdao',
+      role: 'IT Consultant & SAI Board Secretary',
+      ticker: 'CJG',
+      roi: '36x',
+      roiSub: 'vs. ₱60,000 invested over 5 yrs',
+      invested: 60000,
+      duration: 5,
+      stats: [
+        {label:'Total Invested',val:'₱60,000',green:false},
+        {label:'Monthly Salary',val:'₱180,000',green:true},
+        {label:'Break-even',val:'10 days of work',green:true},
+        {label:'Annual Taxes',val:'~₱450,000',green:true},
+      ],
+      milestones: [
+        {year:'Before SAI',event:'At-risk, limited prospects',delta:'−',type:'down',
+         story:'Without SAI, Carlo\'s trajectory led to informal employment at ₱120,000/year. Today he earns that in 20 days. The gap between those two realities is one donor\'s ₱1,000/month.',
+         roiPt:-30},
+        {year:'Year 1',event:'Joined SAI Program',delta:'↱ Investment opens',type:'neutral',
+         story:'₱1,000/month. ₱60,000 over 5 years. A donor subscribed to Carlo\'s future without knowing they were backing a future IT architect and board leader.',
+         roiPt:-18},
+        {year:'Year 2–3',event:'Academic acceleration',delta:'▲ High-aptitude signal',type:'up',
+         story:'Carlo\'s aptitude for analytical thinking — the same skill that powers his IT consulting today — begins to show. SAI\'s intervention unlocks a trajectory that formal education alone might have missed.',
+         roiPt:20},
+        {year:'Year 4–5',event:'Program completion + college prep',delta:'▲▲ Compounding fast',type:'up',
+         story:'Carlo completes the SAI program and continues into higher education. Each year, the value of the original investment grows exponentially.',
+         roiPt:65},
+        {year:'Career Entry',event:'IT Consultant hired',delta:'▲▲▲ ₱180k/month',type:'up',
+         story:'Break-even in 10 working days. Carlo earns back the entire ₱60,000 invested in his 5-year program in less than two weeks of salary. Everything after is pure return.',
+         roiPt:160},
+        {year:'Tax Contribution',event:'~₱450,000/year to state',delta:'▲▲▲ Premium payer',type:'up',
+         story:'Carlo\'s income tax alone — ₱400,000–₱500,000 annually — covers the cost of funding 7–8 new SAI scholars every year. The investment replicates itself.',
+         roiPt:210},
+        {year:'Giving Back',event:'SAI Board Secretary + donor',delta:'▲▲▲ 36x annual ROI',type:'up',
+         story:'Carlo donates back to SAI, maintains the platform pro-bono, and sits on the board. The "Silent Partner" became the Guardian of the Exchange. This is what exponential ROI looks like.',
+         roiPt:240},
+      ]
+    },
+    {
+      id: 'elisha',
+      name: 'Elisha Barrinuevo',
+      role: 'Junior Procurement Officer',
+      ticker: 'ELB',
+      roi: '8.6x',
+      roiSub: 'vs. ₱60,000 invested over 5 yrs',
+      invested: 60000,
+      duration: 5,
+      stats: [
+        {label:'Total Invested',val:'₱60,000',green:false},
+        {label:'Annual Salary',val:'₱518,000+',green:true},
+        {label:'Break-even',val:'11 months',green:true},
+        {label:'Fiscal Contribution',val:'~₱65,000/yr',green:true},
+      ],
+      milestones: [
+        {year:'Before SAI',event:'High-risk, low trajectory',delta:'−',type:'down',
+         story:'Without SAI, Elisha was headed for informal labor — subsistence-level income, no formal sector access, and no upward mobility. A future defined by limitation.',
+         roiPt:-30},
+        {year:'Year 1 (Gr. 6)',event:'Joined SAI Program',delta:'↱ ₱1,000/month begins',type:'neutral',
+         story:'₱60,000 total commitment. A donor\'s monthly subscription to Elisha\'s education would eventually produce a corporate decision-maker who manages supply chains worth multiples of that amount.',
+         roiPt:-18},
+        {year:'Year 2–3',event:'Literacy + numeracy milestones',delta:'▲ Core skills locked',type:'up',
+         story:'Procurement requires reading contracts, parsing vendor terms, and doing financial math. Elisha\'s ability to do all of this traces directly back to SAI\'s early literacy intervention.',
+         roiPt:15},
+        {year:'Year 4',event:'Analytical skills emerging',delta:'▲ Corporate-ready signals',type:'up',
+         story:'The trajectory is now clearly upward. Elisha\'s academic development is unlocking access to the formal economy — a door that was firmly closed before SAI.',
+         roiPt:45},
+        {year:'Year 5 (Gr. 10)',event:'Program completion',delta:'▲ Full deployment',type:'up',
+         story:'₱60,000 deployed. Elisha exits the program equipped for formal sector employment and higher education — the "stuck" risk fully liquidated.',
+         roiPt:70},
+        {year:'Career Entry',event:'Hired: Procurement Officer',delta:'▲▲ ₱37,000/month',type:'up',
+         story:'₱518,000+ per year. Break-even in just 11 months of tax contribution. Elisha moves from "subsistence" to "middle class" — a new consumer fueling other sectors of the economy.',
+         roiPt:155},
+        {year:'Giving Back',event:'Net contributor: 8.6x return',delta:'▲▲▲ Living ROI',type:'up',
+         story:'Every year Elisha works, the original ₱60,000 returns 8.6x in economic value. She manages corporate resources worth far more than what was ever invested in her. Donors didn\'t fund a student — they onboarded a corporate optimizer.',
+         roiPt:230},
+      ]
+    }
+  ];
+
+  let current = 0;
+  let activeMs = null;
+
+  // Support ?id= URL param
+  const urlId = new URLSearchParams(location.search).get('id');
+  if (urlId) {
+    const idx = scholars.findIndex(s => s.id === urlId);
+    if (idx !== -1) current = idx;
+  }
+
+  function buildNav() {
+    const nav = document.getElementById('scholarNav');
+    nav.innerHTML = '';
+    scholars.forEach((s, i) => {
+      const t = document.createElement('button');
+      t.className = 'scholar-tab-btn' + (i === current ? ' active' : '');
+      t.textContent = s.ticker + ' — ' + censorName(s.name).split(' ')[0];
+      t.onclick = () => { current = i; activeMs = null; render(); };
+      nav.appendChild(t);
+    });
+  }
+
+  function buildChart(s) {
+    const svg = document.getElementById('chartSvg');
+    const pts = s.milestones;
+    const n = pts.length;
+    const W = 800, H = 200;
+    const pad = {l:10, r:10, t:24, b:30};
+    const minY = Math.min(...pts.map(p => p.roiPt)) - 20;
+    const maxY = Math.max(...pts.map(p => p.roiPt)) + 30;
+
+    function tx(i) { return pad.l + (i / (n-1)) * (W - pad.l - pad.r); }
+    function ty(v) { return pad.t + (1 - (v - minY) / (maxY - minY)) * (H - pad.t - pad.b); }
+
+    const zero = ty(0);
+
+    let html = `<defs>
+      <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#c8960a" stop-opacity="0.4"/>
+        <stop offset="60%" stop-color="#f5c800" stop-opacity="0.1"/>
+        <stop offset="100%" stop-color="#f5c800" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>`;
+
+    html += `<line x1="${pad.l}" y1="${zero}" x2="${W-pad.r}" y2="${zero}" stroke="#ccbb88" stroke-width="1"/>`;
+    html += `<text x="${pad.l+2}" y="${zero-4}" font-size="7" fill="#999966" font-family="IBM Plex Mono">BASELINE (NO SAI)</text>`;
+
+    let areaPath = `M${tx(0)},${zero}`;
+    pts.forEach((p, i) => { areaPath += ` L${tx(i)},${ty(p.roiPt)}`; });
+    areaPath += ` L${tx(n-1)},${zero} Z`;
+    html += `<path d="${areaPath}" fill="url(#lineGrad)" opacity="0.7"/>`;
+
+    let negPath = `M${tx(0)},${zero}`;
+    pts.forEach((p, i) => { negPath += ` L${tx(i)},${ty(p.roiPt)}`; });
+    negPath += ` L${tx(n-1)},${zero} Z`;
+    html += `<clipPath id="negClip"><rect x="0" y="${zero}" width="${W}" height="${H}"/></clipPath>`;
+    html += `<path d="${negPath}" fill="rgba(204,34,0,0.1)" clip-path="url(#negClip)"/>`;
+
+    let linePath = `M${tx(0)},${ty(pts[0].roiPt)}`;
+    pts.forEach((p, i) => { if (i > 0) linePath += ` L${tx(i)},${ty(p.roiPt)}`; });
+    html += `<path d="${linePath}" fill="none" stroke="#111111" stroke-width="2" filter="url(#glow)"/>`;
+
+    pts.forEach((p, i) => {
+      const isActive = activeMs === i;
+      const col = p.type === 'down' ? '#cc2200' : p.type === 'neutral' ? '#c8960a' : '#111111';
+      const r = isActive ? 6 : 4;
+      html += `<circle cx="${tx(i)}" cy="${ty(p.roiPt)}" r="${r}" fill="${col}" stroke="${col}" stroke-width="${isActive?2:1}" style="cursor:pointer" onclick="selectMs(${i})"/>`;
+      if (isActive) {
+        html += `<line x1="${tx(i)}" y1="${pad.t}" x2="${tx(i)}" y2="${H-pad.b}" stroke="${col}" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.5"/>`;
+      }
+    });
+
+    pts.forEach((p, i) => {
+      html += `<text x="${tx(i)}" y="${H-8}" font-size="6.5" fill="#666644" text-anchor="middle" font-family="IBM Plex Mono">${p.year.split(' ')[0]}</text>`;
+    });
+
+    svg.innerHTML = html;
+
+    const gl = document.getElementById('gridLabels');
+    const steps = [maxY, Math.round((maxY + 0) / 2), 0, minY];
+    gl.innerHTML = steps.map(v => `<span style="font-size:7px;color:${v>0?'#6b5200':v<0?'#880000':'#666644'}">${v>0?'+':''}${v}</span>`).join('');
+  }
+
+  function buildMilestones(s) {
+    const strip = document.getElementById('milestones');
+    strip.innerHTML = '';
+    s.milestones.forEach((m, i) => {
+      const d = document.createElement('div');
+      d.className = 'milestone' + (activeMs === i ? ' active' : '');
+      const col = m.type === 'down' ? 'down' : m.type === 'neutral' ? 'neutral' : 'up';
+      d.innerHTML = `<div class="m-year">${m.year}</div><div class="m-event">${m.event}</div><div class="m-delta ${col}">${m.delta}</div>`;
+      d.onclick = () => selectMs(i);
+      strip.appendChild(d);
+    });
+  }
+
+  function selectMs(i) {
+    activeMs = i;
+    render();
+  }
+  window.selectMs = selectMs;
+
+  function buildStory(s) {
+    const ev = document.getElementById('storyEvent');
+    const tx = document.getElementById('storyText');
+    if (activeMs === null) {
+      ev.textContent = '← Select a milestone above';
+      tx.textContent = 'Each marker represents a turning point in ' + censorName(s.name).split(' ')[0] + '\'s journey. Click any event to read the story.';
+    } else {
+      const m = s.milestones[activeMs];
+      ev.textContent = m.year + ' — ' + m.event;
+      tx.textContent = m.story;
+    }
+  }
+
+  function buildStats(s) {
+    const row = document.getElementById('statsRow');
+    row.innerHTML = s.stats.map(st => `
+      <div class="stat-box">
+        <div class="stat-label">${st.label}</div>
+        <div class="stat-val ${st.green ? 'green' : ''}">${st.val}</div>
+      </div>
+    `).join('');
+  }
+
+  function render() {
+    const s = scholars[current];
+    buildNav();
+    document.getElementById('scholarName').textContent = censorName(s.name);
+    document.getElementById('scholarRole').textContent = s.role;
+    document.getElementById('roiValue').textContent = s.roi + '/yr';
+    document.getElementById('roiSub').textContent = s.roiSub;
+    buildChart(s);
+    buildMilestones(s);
+    buildStory(s);
+    buildStats(s);
+  }
+
+  render();
+</script>
+</body>
+</html>

@@ -1,3 +1,13 @@
+// ===== NAME CENSORING =====
+function censorName(fullName) {
+  const parts = fullName.trim().split(/\s+/);
+  const censorFirst = name =>
+    name.split('').map((c, i) => i % 2 === 1 ? '*' : c).join('');
+  const first = censorFirst(parts[0]);
+  const last = parts.length > 1 ? parts[parts.length - 1][0] + '.' : '';
+  return last ? `${first} ${last}` : first;
+}
+
 // ===== DATA =====
 let _students = null;
 

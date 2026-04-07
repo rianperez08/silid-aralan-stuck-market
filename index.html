@@ -9,186 +9,259 @@
   <script src="assets/auth.js"></script>
 </head>
 <body>
+<div class="scanline"></div>
 
-  <!-- Ticker Tape -->
-  <div class="ticker-wrap">
-    <div class="ticker" id="ticker"></div>
+<!-- Ticker Tape -->
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+  <a href="index.html" class="nav-logo">STUCK<span>MARKET</span></a>
+  <div class="nav-links">
+    <a href="scholars.html">Scholar Index</a>
+    <a href="market.html">The Market</a>
+    <a href="index.html#how">How It Works</a>
+    <a href="dashboard.html" id="nav-dashboard" style="display:none">My Portfolio</a>
+    <a href="index.html#how" class="nav-btn" id="nav-invest">Support Now</a>
+    <a href="#" class="nav-auth" id="nav-auth-btn" onclick="openAuthModal('login');return false;">Sign In</a>
   </div>
+</nav>
 
-  <!-- Nav -->
-  <nav class="nav">
-    <a href="index.html" class="nav-logo">STUCK<span>MARKET</span></a>
-    <div class="nav-links">
-      <a href="market.html">The Market</a>
-      <a href="dashboard.html" id="nav-dashboard" style="display:none">My Portfolio</a>
-      <a href="#how" class="nav-btn" id="nav-invest">Invest Now</a>
-      <a href="#" class="nav-auth" id="nav-auth-btn" onclick="openAuthModal('login');return false;">Sign In</a>
-    </div>
-  </nav>
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-eyebrow">Silid Aralan, Inc. &nbsp;•&nbsp; Est. 2026</div>
+  <h1>STUCK<br>MARKET<span class="blinking"> ▮</span></h1>
+  <p class="hero-sub">
+    A scholarship marketplace where every peso you invest turns a social liability into a national asset.
+  </p>
+  <div class="hero-cta">
+    <a href="market.html" class="btn-primary">Browse the Market →</a>
+    <a href="scholars.html" class="btn-secondary">Scholar Index</a>
+  </div>
+  <div class="hero-stats" id="hero-stats">
+    <div class="stat"><span class="stat-num" id="stat-learners">—</span><span class="stat-label">Current Learners</span></div>
+    <div class="stat"><span class="stat-num" id="stat-value">—</span><span class="stat-label">Net Social Value</span></div>
+    <div class="stat"><span class="stat-num">11x</span><span class="stat-label">SROI Ratio</span></div>
+    <div class="stat"><span class="stat-num">4</span><span class="stat-label">Scholars Launched</span></div>
+  </div>
+</section>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-tag">Silid Aralan Inc. • 2026</div>
-    <h1>Back a student.<br>Watch them grow.</h1>
-    <p class="hero-sub">
-      Stuck Market is a scholarship marketplace where you invest in students who struggle most.
-      Every peso you put in turns a social debt into a national asset.
-    </p>
-    <div class="hero-cta">
-      <a href="market.html" class="btn-primary">Browse the Market</a>
-      <a href="#how" class="btn-secondary">How It Works</a>
-    </div>
-    <div class="hero-stats" id="hero-stats">
-      <div class="stat"><span class="stat-num" id="stat-learners">—</span><span class="stat-label">Learners</span></div>
-      <div class="stat"><span class="stat-num" id="stat-value">—</span><span class="stat-label">Total Social Value</span></div>
-      <div class="stat"><span class="stat-num" id="stat-sroi">11x</span><span class="stat-label">SROI Ratio</span></div>
-    </div>
-  </section>
+<!-- Scholar Index -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">Past Scholars</div>
+    <h2>The Exchange Ledger</h2>
+    <p class="section-sub">These four scholars graduated the SAI program. Their career ROI is live and auditable.</p>
 
-  <!-- How It Works -->
-  <section class="section" id="how">
-    <div class="container">
-      <div class="section-label">The Mechanism</div>
-      <h2>How the Market Works</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">01</div>
-          <h3>Browse Students</h3>
-          <p>Each student is a "ticker" — a living asset with a current social value. Find one whose story moves you.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">02</div>
-          <h3>Back Their Account</h3>
-          <p>Commit ₱12,000/year (₱1,000/month). Your contribution is matched, turning ₱500 into ₱1,000 of Learning Credits every month.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">03</div>
-          <h3>Watch the Value Rise</h3>
-          <p>Every day a student attends (+₱150), completes activities (+₱100), and stays hopeful (+₱50), their price climbs toward positive.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">04</div>
-          <h3>Celebrate Milestones</h3>
-          <p>When a student hits a Reading Milestone, their value jumps +₱5,000. That's verified by an independent assessor every month.</p>
-        </div>
+    <div style="overflow-x:auto;">
+      <table class="scholar-index">
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Scholar</th>
+            <th>Current Role</th>
+            <th>Invested</th>
+            <th>Annual Earnings</th>
+            <th>ROI</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr onclick="location.href='scholars.html?id=carlo'">
+            <td><span class="si-ticker">CJG</span></td>
+            <td>Carlo Jumagdao</td>
+            <td>IT Consultant &amp; SAI Board Sec.</td>
+            <td>₱60,000</td>
+            <td>₱2,160,000/yr</td>
+            <td><span class="si-roi">36x</span></td>
+            <td><span class="si-status">✓ Active</span></td>
+          </tr>
+          <tr onclick="location.href='scholars.html?id=kent'">
+            <td><span class="si-ticker">KIV</span></td>
+            <td>Kent Ian Vargas</td>
+            <td>Public School Teacher I</td>
+            <td>₱60,000</td>
+            <td>₱372,000/yr</td>
+            <td><span class="si-roi">6.2x</span></td>
+            <td><span class="si-status">✓ Active</span></td>
+          </tr>
+          <tr onclick="location.href='scholars.html?id=elisha'">
+            <td><span class="si-ticker">ELB</span></td>
+            <td>Elisha Barrinuevo</td>
+            <td>Junior Procurement Officer</td>
+            <td>₱60,000</td>
+            <td>₱518,000+/yr</td>
+            <td><span class="si-roi">8.6x</span></td>
+            <td><span class="si-status">✓ Active</span></td>
+          </tr>
+          <tr onclick="location.href='scholars.html?id=erlen'">
+            <td><span class="si-ticker">ERM</span></td>
+            <td>Erlen Mahilum</td>
+            <td>BPO Content Moderator</td>
+            <td>₱48,000</td>
+            <td>₱300,000/yr</td>
+            <td><span class="si-roi">6.25x</span></td>
+            <td><span class="si-status">✓ Active</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:1.5rem;text-align:center;">
+      <a href="scholars.html" class="btn-secondary">View Full Timelines →</a>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="section dark" id="how">
+  <div class="container">
+    <div class="section-label">The Mechanism</div>
+    <h2>How the Market Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Browse Students</h3>
+        <p>Each student is a "ticker" — a living asset with a current social value. Find one whose story moves you.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Back Their Account</h3>
+        <p>Commit ₱12,000/year (₱1,000/month). Your contribution is matched, turning ₱500 into ₱1,000 in Learning Credits.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Watch the Value Rise</h3>
+        <p>Every day a student attends (+₱150), completes activities (+₱100), and stays hopeful (+₱50), their price climbs.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Celebrate Milestones</h3>
+        <p>When a student hits a Reading Milestone, their value jumps +₱5,000 — verified by an independent assessor monthly.</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- SROI -->
-  <section class="section dark" id="sroi">
-    <div class="container two-col">
-      <div>
-        <div class="section-label">The Formula</div>
-        <h2>₱1 in.<br>₱11 back.</h2>
-        <p>For every ₱1 invested, Stuck Market delivers ₱11 of social return to the Philippines. A child who can't read is a ₱66,000 liability. One who can is a ₱66,000 contributor. Together that's ₱132,000 in impact per child — on a ₱12,000 investment.</p>
-        <div class="formula-box">
-          <div class="formula-line">SROI = <span>Total Social Value Created</span> / <span>Total Investment</span></div>
-          <div class="formula-line">= <span>₱132,000</span> / <span>₱12,000</span> = <strong>11x</strong></div>
-        </div>
-      </div>
-      <div class="sroi-visual">
-        <div class="sroi-card">
-          <div class="sroi-label">Avoided Social Costs</div>
-          <div class="sroi-amount green">+₱66,000</div>
-          <div class="sroi-desc">Money the Philippines saves on welfare, health, and grade repetition</div>
-        </div>
-        <div class="sroi-plus">+</div>
-        <div class="sroi-card">
-          <div class="sroi-label">Economic Potential Gained</div>
-          <div class="sroi-amount green">+₱66,000</div>
-          <div class="sroi-desc">Projected lifetime earnings increase and tax contributions</div>
-        </div>
-        <div class="sroi-equals">= ₱132,000 per child</div>
+<!-- SROI -->
+<section class="section" id="sroi">
+  <div class="container two-col">
+    <div>
+      <div class="section-label">The Formula</div>
+      <h2>₱1 in.<br>₱11 back.</h2>
+      <p class="section-sub">For every ₱1 invested, Stuck Market delivers ₱11 of social return to the Philippines. A child who can't read is a ₱66,000 liability. One who can is a ₱66,000 contributor. Together that's ₱132,000 in impact — on a ₱12,000 investment.</p>
+      <div class="formula-box">
+        <div class="formula-line">SROI = <span>Total Social Value</span> / <span>Total Investment</span></div>
+        <div class="formula-line">= <span>₱132,000</span> / <span>₱12,000</span> = <strong>11x</strong></div>
       </div>
     </div>
-  </section>
+    <div class="sroi-visual">
+      <div class="sroi-card">
+        <div class="sroi-label">Avoided Social Costs</div>
+        <div class="sroi-amount green">+₱66,000</div>
+        <div class="sroi-desc">Savings on welfare, health, and grade repetition</div>
+      </div>
+      <div class="sroi-plus">+</div>
+      <div class="sroi-card">
+        <div class="sroi-label">Economic Potential Gained</div>
+        <div class="sroi-amount green">+₱66,000</div>
+        <div class="sroi-desc">Lifetime earnings increase and tax contributions</div>
+      </div>
+      <div class="sroi-equals">= ₱132,000 per child</div>
+    </div>
+  </div>
+</section>
 
-  <!-- Daily Value -->
-  <section class="section" id="daily">
-    <div class="container">
-      <div class="section-label">The Stock Price</div>
-      <h2>A Living Value, Updated Daily</h2>
-      <p class="section-sub">Each student starts at -₱66,000. Every session chips away at that debt.</p>
-      <div class="daily-grid">
-        <div class="daily-card">
-          <div class="daily-icon">📅</div>
-          <div class="daily-val green">+₱150</div>
-          <div class="daily-name">Attendance</div>
-          <div class="daily-desc">They showed up. They're safe and ready to learn.</div>
-        </div>
-        <div class="daily-card">
-          <div class="daily-icon">✨</div>
-          <div class="daily-val green">+₱50</div>
-          <div class="daily-name">Hope Index</div>
-          <div class="daily-desc">They feel good about themselves. Hope prevents dropout.</div>
-        </div>
-        <div class="daily-card">
-          <div class="daily-icon">📝</div>
-          <div class="daily-val green">+₱100</div>
-          <div class="daily-name">Activity Sheet</div>
-          <div class="daily-desc">They did the work. Every worksheet builds a brain muscle.</div>
-        </div>
-        <div class="daily-card highlight">
-          <div class="daily-icon">🚀</div>
-          <div class="daily-val green">+₱5,000</div>
-          <div class="daily-name">Reading Milestone</div>
-          <div class="daily-desc">Monthly breakout bonus when the reading test is cleared.</div>
-        </div>
+<!-- Daily Value -->
+<section class="section dark" id="daily">
+  <div class="container">
+    <div class="section-label">The Stock Price</div>
+    <h2>A Living Value, Updated Daily</h2>
+    <p class="section-sub">Each student starts at -₱66,000. Every session chips away at that debt.</p>
+    <div class="daily-grid">
+      <div class="daily-card">
+        <div class="daily-icon">📅</div>
+        <div class="daily-val green">+₱150</div>
+        <div class="daily-name">Attendance</div>
+        <div class="daily-desc">They showed up. They're safe and ready to learn.</div>
+      </div>
+      <div class="daily-card">
+        <div class="daily-icon">✨</div>
+        <div class="daily-val green">+₱50</div>
+        <div class="daily-name">Hope Index</div>
+        <div class="daily-desc">They feel good about themselves. Hope prevents dropout.</div>
+      </div>
+      <div class="daily-card">
+        <div class="daily-icon">📝</div>
+        <div class="daily-val green">+₱100</div>
+        <div class="daily-name">Activity Sheet</div>
+        <div class="daily-desc">They did the work. Every worksheet builds a brain muscle.</div>
+      </div>
+      <div class="daily-card highlight">
+        <div class="daily-icon">🚀</div>
+        <div class="daily-val green">+₱5,000</div>
+        <div class="daily-name">Reading Milestone</div>
+        <div class="daily-desc">Monthly breakout bonus when the reading test is cleared.</div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Market Preview -->
-  <section class="section dark">
-    <div class="container">
-      <div class="section-label">The Market</div>
-      <h2>Today's Rising Assets</h2>
-      <div class="preview-grid" id="preview-grid"></div>
-      <div style="text-align:center;margin-top:2rem;">
-        <a href="market.html" class="btn-primary">View All Learners →</a>
-      </div>
+<!-- Market Preview -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">The Market</div>
+    <h2>Today's Rising Assets</h2>
+    <div class="preview-grid" id="preview-grid"></div>
+    <div style="text-align:center;margin-top:2rem;">
+      <a href="market.html" class="btn-primary">View All Learners →</a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Privacy -->
-  <section class="section" id="privacy">
-    <div class="container narrow">
-      <div class="section-label">Privacy First</div>
-      <h2>Protecting Every Child</h2>
-      <p>Students are displayed using only their first name and last initial (e.g., "Prince C."). No surnames, home addresses, or school names appear on public pages. All data is handled under the Data Privacy Act of 2012 with written consent from parents and guardians before any student appears on the platform.</p>
-    </div>
-  </section>
+<!-- Privacy -->
+<section class="section dark" id="privacy">
+  <div class="container narrow">
+    <div class="section-label">Privacy First</div>
+    <h2>Protecting Every Child</h2>
+    <p class="section-sub">Students are displayed using only their first name and last initial (e.g., "Prince C."). No surnames, home addresses, or school names appear on public pages. All data is handled under the Data Privacy Act of 2012 with written consent from parents and guardians.</p>
+  </div>
+</section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-logo">STUCK<span>MARKET</span></div>
-    <p>A Silid Aralan Inc. initiative. Backing the students who need it most.</p>
-    <div class="footer-links">
-      <a href="market.html">The Market</a>
-      <a href="#how">How It Works</a>
-      <a href="#privacy">Privacy</a>
-    </div>
-  </footer>
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-logo">STUCK<span>MARKET</span></div>
+  <p>A Silid Aralan Inc. initiative. Backing the students who need it most.</p>
+  <div class="footer-links">
+    <a href="market.html">The Market</a>
+    <a href="scholars.html">Scholar Index</a>
+    <a href="index.html#how">How It Works</a>
+    <a href="index.html#privacy">Privacy</a>
+  </div>
+</footer>
 
-  <script src="assets/app.js"></script>
-  <script>
-    initAuth(user => updateNavAuth(user), () => updateNavAuth(null));
+<script src="assets/app.js"></script>
+<script>
+  initAuth(user => updateNavAuth(user), () => updateNavAuth(null));
 
-    loadStudents().then(students => {
-      // Hero stats
-      document.getElementById('stat-learners').textContent = students.length;
-      const totalVal = students.reduce((s, st) => s + st.current_value, 0);
-      document.getElementById('stat-value').textContent = '₱' + Math.abs(Math.round(totalVal / 1000)) + 'K';
+  loadStudents().then(students => {
+    document.getElementById('stat-learners').textContent = students.length;
+    const totalVal = students.reduce((s, st) => s + st.current_value, 0);
+    document.getElementById('stat-value').textContent = '₱' + Math.abs(Math.round(totalVal / 1000)) + 'K';
 
-      // Ticker
-      buildTicker(students);
+    buildTicker(students);
 
-      // Preview: top 6 by attendance (most active)
-      const top = [...students].sort((a,b) => b.attendance_days - a.attendance_days).slice(0, 6);
-      const grid = document.getElementById('preview-grid');
-      top.forEach(s => grid.appendChild(buildStudentCard(s)));
+    // Censor scholar names in the Exchange Ledger
+    document.querySelectorAll('.scholar-index tbody tr td:nth-child(2)').forEach(td => {
+      td.textContent = censorName(td.textContent);
     });
-  </script>
+
+    const top = [...students].sort((a,b) => b.attendance_days - a.attendance_days).slice(0, 6);
+    const grid = document.getElementById('preview-grid');
+    top.forEach(s => grid.appendChild(buildStudentCard(s)));
+  });
+</script>
 </body>
 </html>
